@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8"> <!-- ترميز النصوص -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- إعدادات العرض للشاشات المختلفة -->
+    <title>Financial Transactions Dashboard</title> <!-- عنوان الصفحة -->
+    <script src="https://cdn.tailwindcss.com"></script> <!-- مكتبة Tailwind CSS للتصميم -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script> <!-- مكتبة ApexCharts للرسوم البيانية -->
+    <script>
+        // إعدادات Tailwind CSS - تخصيص الألوان والظلال والمسافات
+        tailwind.config = {
+            darkMode: 'class', // تفعيل الوضع الداكن باستخدام class
+            theme: {
+                extend: {
+                    colors: {
+                        'dark': '#1a1a1a', // اللون الأساسي للخلفية في الوضع الداكن
+                        'dark-2': '#2d2d2d', // لون البطاقات في الوضع الداكن
+                        'dark-3': '#404040', // لون الحدود في الوضع الداكن
+                        'dark-6': '#a0a0a0', // لون النصوص الثانوية في الوضع الداكن
+                        'stroke': '#e5e5e5', // لون خطوط الفصل
+                        'shadow-1': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)', // ظل خفيف
+                        'shadow-card': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)', // ظل البطاقات
+                        'body-2xlg': '1.5rem', // حجم خط كبير للعناوين
+                    },
+                    spacing: {
+                        '7.5': '1.875rem', // مسافة مخصصة (30px)
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* تنسيق مربع التلميحات (tooltip) في الرسم البياني - الوضع الفاتح */
+        .apexcharts-tooltip {
+            background: rgba(255, 255, 255, 0.95) !important; /* خلفية شفافة بيضاء */
+            border: 1px solid #e5e5e5 !important; /* حدود رمادية فاتحة */
+            border-radius: 8px !important; /* زوايا مدورة */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important; /* ظل خفيف */
+        }
+        
+        /* تنسيق مربع التلميحات في الرسم البياني - الوضع الداكن */
+        .dark .apexcharts-tooltip {
+            background: rgba(45, 45, 45, 0.95) !important; /* خلفية شفافة داكنة */
+            border: 1px solid #404040 !important; /* حدود رمادية داكنة */
+            color: white !important; /* لون النص أبيض */
+        }
+        
+        /* تنسيق خطوط الشبكة في الرسم البياني - خطوط متقطعة */
+        .apexcharts-gridline {
+            stroke-dasharray: 5 !important; /* نمط خطوط متقطعة */
+        }
+        
+        /* تنسيق خطوط الشبكة في الرسم البياني - الوضع الداكن */
+        .dark .apexcharts-gridline {
+            stroke: #404040 !important; /* لون الخطوط رمادي داكن */
+        }
+        
+        /* تنسيق النصوص في الرسم البياني - الوضع الداكن */
+        .dark .apexcharts-text {
+            fill: #a0a0a0 !important; /* لون النص رمادي فاتح */
+        }
+        
+        /* تنسيق تسميات المحاور (X و Y) في الرسم البياني - الوضع الداكن */
+        .dark .apexcharts-xaxis-label,
+        .dark .apexcharts-yaxis-label {
+            fill: #a0a0a0 !important; /* لون التسميات رمادي فاتح */
+        }
+
+        /* انتقالات سلسة لتبديل الألوان عند تغيير الوضع (فاتح/داكن) */
+        * {
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* تخصيص شريط التمرير - عرض الشريط */
+        ::-webkit-scrollbar {
+            width: 6px; /* عرض شريط التمرير */
+        }
+
+        /* تخصيص شريط التمرير - خلفية المسار */
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; /* لون خلفية مسار التمرير */
+        }
+
+        /* تخصيص شريط التمرير - شكل المؤشر */
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1; /* لون مؤشر التمرير */
+            border-radius: 3px; /* زوايا مدورة للمؤشر */
+        }
+
+        /* تخصيص شريط التمرير - تأثير التحويم على المؤشر */
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8; /* لون المؤشر عند التحويم */
+        }
+
+        /* تخصيص شريط التمرير - خلفية المسار في الوضع الداكن */
+        .dark ::-webkit-scrollbar-track {
+            background: #2d2d2d; /* لون خلفية مسار التمرير في الوضع الداكن */
+        }
+
+        /* تخصيص شريط التمرير - شكل المؤشر في الوضع الداكن */
+        .dark ::-webkit-scrollbar-thumb {
+            background: #555; /* لون مؤشر التمرير في الوضع الداكن */
+        }
+
+        /* تخصيص شريط التمرير - تأثير التحويم على المؤشر في الوضع الداكن */
+        .dark ::-webkit-scrollbar-thumb:hover {
+            background: #666; /* لون المؤشر عند التحويم في الوضع الداكن */
+        }
+    </style>
+</head>
+    <body class="bg-gray-50 dark:bg-dark min-h-screen p-4 sm:p-6 lg:p-8"> <!-- جسم الصفحة مع الخلفية والمسافات -->
+    <div class="max-w-6xl mx-auto"> <!-- الحاوية الرئيسية مع العرض الأقصى والوسط -->
+        <!-- رأس الصفحة - العنوان وزر تبديل الوضع الداكن -->
+        <div class="mb-6 flex justify-between items-start">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Financial Dashboard</h1> <!-- العنوان الرئيسي -->
+                <p class="text-gray-600 dark:text-gray-400">Monitor your financial transactions and cash flow</p> <!-- الوصف -->
+            </div>
+            <button id="darkModeToggle" class="p-2 rounded-lg bg-white dark:bg-dark-2 border border-gray-200 dark:border-dark-3 hover:bg-gray-50 dark:hover:bg-dark-3 transition-colors"> <!-- زر تبديل الوضع الداكن -->
+                <svg id="sunIcon" class="w-5 h-5 text-gray-600 dark:text-gray-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"> <!-- أيقونة الشمس (للانتقال للوضع الفاتح) -->
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                </svg>
+                <svg id="moonIcon" class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"> <!-- أيقونة القمر (للانتقال للوضع الداكن) -->
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                </svg>
+            </button>
+        </div>
+
+        <!-- بطاقة المعاملات المالية - الرسم البياني والملخص -->
+        <div class="grid gap-2 rounded-[10px] bg-white px-7.5 pb-6 pt-7.5 shadow-1 dark:bg-dark-2 dark:shadow-card col-span-12 xl:col-span-7">
+            <div class="flex flex-wrap items-center justify-between gap-4"> <!-- رأس البطاقة مع العنوان والفلتر -->
+                <h2 class="text-body-2xlg font-bold text-dark dark:text-white">Financial Transactions</h2> <!-- عنوان البطاقة -->
+                <div class="relative"> <!-- حاوية القائمة المنسدلة -->
+                    <button id="periodFilter" class="flex h-8 w-full items-center justify-between gap-x-1 rounded-md border border-[#E8E8E8] bg-white px-3 py-2 text-sm font-medium text-dark-5 outline-none ring-offset-white disabled:cursor-not-allowed disabled:opacity-50 data-[placeholder]:text-neutral-500 dark:border-dark-3 dark:bg-dark-2 dark:text-white dark:ring-offset-neutral-950 dark:focus:ring-neutral-300 dark:data-[placeholder]:text-neutral-400 [&>span]:line-clamp-1 [&[data-state='open']>svg]:rotate-0" aria-expanded="false" aria-haspopup="menu" data-state="closed"> <!-- زر القائمة المنسدلة -->
+                        <span class="capitalize">monthly</span> <!-- النص المعروض -->
+                        <svg width="22" height="22" viewBox="0 0 22 22" fill="currentColor" class="size-4 rotate-180 transition-transform"> <!-- أيقونة السهم -->
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M10.551 7.728a.687.687 0 01.895 0l6.417 5.5a.687.687 0 11-.895 1.044l-5.97-5.117-5.969 5.117a.687.687 0 01-.894-1.044l6.416-5.5z"></path>
+                        </svg>
+                    </button>
+                    <div id="periodDropdown" class="absolute right-0 top-full mt-1 hidden w-32 rounded-md border border-gray-200 bg-white shadow-lg dark:border-dark-3 dark:bg-dark-2 z-10"> <!-- القائمة المنسدلة -->
+                        <div class="py-1">
+                            <button class="period-option block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-dark-3" data-period="weekly">Weekly</button> <!-- خيار أسبوعي -->
+                            <button class="period-option block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-dark-3" data-period="monthly">Monthly</button> <!-- خيار شهري -->
+                            <button class="period-option block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-dark-3" data-period="yearly">Yearly</button> <!-- خيار سنوي -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- منطقة الرسم البياني - حاوية الرسم البياني -->
+            <div class="-ml-4 -mr-5 h-[310px]">
+                <div style="min-height: 315px;" class="">
+                    <div id="financialChart" class="w-full h-full"></div>
+                </div>
+            </div>
+            
+            <!-- ملخص البيانات المالية - التدفقات الداخلة والخارجة -->
+            <dl class="grid divide-stroke text-center dark:divide-dark-3 sm:grid-cols-2 sm:divide-x [&>div]:flex [&>div]:flex-col-reverse [&>div]:gap-1">
+                <div class="dark:border-dark-3 max-sm:mb-3 max-sm:border-b max-sm:pb-3"> <!-- قسم التدفقات الداخلة -->
+                    <dt class="text-xl font-bold text-dark dark:text-white">$580.00</dt> <!-- قيمة التدفقات الداخلة -->
+                    <dd class="font-medium dark:text-dark-6">Inflow</dd> <!-- تسمية التدفقات الداخلة -->
+                </div>
+                <div> <!-- قسم التدفقات الخارجة -->
+                    <dt class="text-xl font-bold text-dark dark:text-white">$628.00</dt> <!-- قيمة التدفقات الخارجة -->
+                    <dd class="font-medium dark:text-dark-6">Outflow</dd> <!-- تسمية التدفقات الخارجة -->
+                </div>
+            </dl>
+        </div>
+    </div>
+
+    <script>
+        // بيانات الرسم البياني - إعدادات ApexCharts
+        const chartData = {
+            series: [
+                {
+                    name: 'Received', // البيانات المستلمة
+                    data: [65, 78, 90, 81, 56, 55, 65, 85, 45, 35, 45, 60] // قيم البيانات الشهرية
+                },
+                {
+                    name: 'Due', // البيانات المستحقة
+                    data: [85, 95, 70, 65, 45, 35, 80, 60, 30, 15, 60, 75] // قيم البيانات الشهرية
+                }
+            ],
+            options: {
+                chart: {
+                    type: 'area', // نوع الرسم البياني (مساحي)
+                    height: 300, // ارتفاع الرسم البياني
+                    toolbar: {
+                        show: false // إخفاء شريط الأدوات
+                    },
+                                    animations: {
+                    enabled: true, // تفعيل الحركات
+                    easing: 'easeinout', // نوع الحركة (سهولة في البداية والنهاية)
+                    speed: 800, // سرعة الحركة
+                    animateGradually: {
+                        enabled: true, // تفعيل الحركة التدريجية
+                        delay: 150 // تأخير الحركة
+                    },
+                    dynamicAnimation: {
+                        enabled: true, // تفعيل الحركة الديناميكية
+                        speed: 350 // سرعة الحركة الديناميكية
+                    }
+                }
+                },
+                colors: ['#876d4b', '#2d2a26'], // ألوان الخطوط (بني ذهبي، رمادي داكن)
+                dataLabels: {
+                    enabled: false // إخفاء تسميات البيانات
+                },
+                stroke: {
+                    curve: 'smooth', // خطوط منحنية سلسة
+                    width: 3 // عرض الخطوط
+                },
+                fill: {
+                    type: 'gradient', // نوع التعبئة (تدرج لوني)
+                    gradient: {
+                        shadeIntensity: 1, // شدة التظليل
+                        opacityFrom: 0.55, // الشفافية من
+                        opacityTo: 0, // الشفافية إلى
+                        stops: [0, 100] // نقاط التوقف
+                    }
+                },
+                xaxis: {
+                    categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], // تسميات المحور الأفقي (الأشهر)
+                    labels: {
+                        style: {
+                            colors: '#373d3f', // لون التسميات
+                            fontSize: '12px', // حجم الخط
+                            fontFamily: 'inherit' // نوع الخط
+                        }
+                    },
+                    axisBorder: {
+                        show: false // إخفاء حدود المحور
+                    },
+                    axisTicks: {
+                        show: false // إخفاء علامات المحور
+                    }
+                },
+                yaxis: {
+                    labels: {
+                        style: {
+                            colors: '#373d3f', // لون التسميات
+                            fontSize: '11px', // حجم الخط
+                            fontFamily: 'inherit' // نوع الخط
+                        },
+                        formatter: function (val) {
+                            return val.toFixed(0); // تنسيق القيم كأرقام صحيحة
+                        }
+                    },
+                    min: 0, // الحد الأدنى للمحور
+                    max: 100 // الحد الأقصى للمحور
+                },
+                grid: {
+                    borderColor: '#e0e0e0', // لون حدود الشبكة
+                    strokeDashArray: 5, // نمط الخطوط المتقطعة
+                    xaxis: {
+                        lines: {
+                            show: false // إخفاء خطوط الشبكة الأفقية
+                        }
+                    },
+                    yaxis: {
+                        lines: {
+                            show: true // إظهار خطوط الشبكة العمودية
+                        }
+                    }
+                },
+                tooltip: {
+                    theme: 'light', // مظهر التلميحات (فاتح)
+                    x: {
+                        format: 'MMM' // تنسيق التاريخ (شهر مختصر)
+                    },
+                    y: {
+                        formatter: function (val) {
+                            return val.toFixed(0); // تنسيق القيم كأرقام صحيحة
+                        }
+                    }
+                },
+                legend: {
+                    show: false // إخفاء المفتاح
+                },
+                responsive: [{
+                    breakpoint: 768, // نقطة التوقف للشاشات الصغيرة (أقل من 768px)
+                    options: {
+                        chart: {
+                            height: 250 // ارتفاع أقل للشاشات الصغيرة
+                        }
+                    }
+                }] // إعدادات الاستجابة للشاشات المختلفة
+            }
+        };
+
+        // تهيئة الرسم البياني - إنشاء وتشغيل الرسم البياني
+        let chart = new ApexCharts(document.querySelector("#financialChart"), { // إنشاء كائن الرسم البياني
+            ...chartData.options, // تطبيق الإعدادات
+            series: chartData.series // تطبيق البيانات
+        });
+        chart.render(); // عرض الرسم البياني
+
+        // وظائف فلتر الفترة الزمنية - التحكم في القائمة المنسدلة
+        // الحصول على عناصر القائمة المنسدلة
+        const periodFilter = document.getElementById('periodFilter'); // زر القائمة المنسدلة
+        const periodDropdown = document.getElementById('periodDropdown'); // القائمة المنسدلة نفسها
+        const periodOptions = document.querySelectorAll('.period-option'); // خيارات القائمة
+
+        // إظهار/إخفاء القائمة المنسدلة عند النقر على الزر
+        periodFilter.addEventListener('click', function() {
+            periodDropdown.classList.toggle('hidden'); // تبديل حالة إظهار/إخفاء القائمة
+            const svg = this.querySelector('svg');
+            svg.classList.toggle('rotate-180'); // تدوير السهم
+        });
+
+        // معالج النقر على خيارات الفترة الزمنية
+        periodOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                const period = this.getAttribute('data-period'); // الحصول على الفترة المختارة
+                const span = periodFilter.querySelector('span');
+                span.textContent = period; // تحديث النص المعروض
+                periodDropdown.classList.add('hidden'); // إخفاء القائمة
+                periodFilter.querySelector('svg').classList.remove('rotate-180'); // إعادة السهم لوضعه الطبيعي
+                
+                // تحديث بيانات الرسم البياني حسب الفترة المختارة
+                updateChartData(period);
+            });
+        });
+
+        // إغلاق القائمة المنسدلة عند النقر خارجها
+        document.addEventListener('click', function(event) {
+            if (!periodFilter.contains(event.target) && !periodDropdown.contains(event.target)) { // التحقق من أن النقر خارج القائمة
+                periodDropdown.classList.add('hidden'); // إخفاء القائمة
+                periodFilter.querySelector('svg').classList.remove('rotate-180'); // إعادة السهم لوضعه الطبيعي
+            }
+        });
+
+        // تحديث بيانات الرسم البياني حسب الفترة المختارة
+        function updateChartData(period) {
+            // بيانات تجريبية للفترات المختلفة
+            const dataMap = {
+                weekly: { // بيانات أسبوعية
+                    received: [45, 52, 38, 67, 58, 49, 61], // البيانات المستلمة للأسبوع
+                    due: [55, 62, 48, 77, 68, 59, 71], // البيانات المستحقة للأسبوع
+                    categories: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] // أيام الأسبوع
+                },
+                monthly: { // بيانات شهرية
+                    received: [65, 78, 90, 81, 56, 55, 65, 85, 45, 35, 45, 60], // البيانات المستلمة للأشهر
+                    due: [85, 95, 70, 65, 45, 35, 80, 60, 30, 15, 60, 75], // البيانات المستحقة للأشهر
+                    categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] // أسماء الأشهر
+                },
+                yearly: { // بيانات سنوية
+                    received: [720, 850, 920, 780, 650, 580], // البيانات المستلمة للسنوات
+                    due: [680, 820, 880, 750, 620, 550], // البيانات المستحقة للسنوات
+                    categories: ['2019', '2020', '2021', '2022', '2023', '2024'] // السنوات
+                }
+            };
+
+            const data = dataMap[period]; // الحصول على البيانات حسب الفترة المختارة
+            if (data) { // التحقق من وجود البيانات
+                chart.updateOptions({
+                    xaxis: {
+                        categories: data.categories // تحديث تسميات المحور الأفقي
+                    }
+                });
+                chart.updateSeries([
+                    {
+                        name: 'Received', // تحديث البيانات المستلمة
+                        data: data.received
+                    },
+                    {
+                        name: 'Due', // تحديث البيانات المستحقة
+                        data: data.due
+                    }
+                ]);
+            }
+        }
+
+        // الحصول على عناصر تبديل الوضع الداكن
+        const darkModeToggle = document.getElementById('darkModeToggle'); // زر تبديل الوضع
+        const sunIcon = document.getElementById('sunIcon'); // أيقونة الشمس
+        const moonIcon = document.getElementById('moonIcon'); // أيقونة القمر
+
+        // دالة تبديل الوضع الداكن/الفاتح
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            if (html.classList.contains('dark')) { // إذا كان الوضع الحالي داكن
+                html.classList.remove('dark'); // إزالة الوضع الداكن
+                localStorage.setItem('theme', 'light'); // حفظ التفضيل في المتصفح
+                sunIcon.classList.add('hidden'); // إخفاء أيقونة الشمس
+                moonIcon.classList.remove('hidden'); // إظهار أيقونة القمر
+            } else { // إذا كان الوضع الحالي فاتح
+                html.classList.add('dark'); // إضافة الوضع الداكن
+                localStorage.setItem('theme', 'dark'); // حفظ التفضيل في المتصفح
+                sunIcon.classList.remove('hidden'); // إظهار أيقونة الشمس
+                moonIcon.classList.add('hidden'); // إخفاء أيقونة القمر
+            }
+        }
+
+        // إضافة مستمع الحدث لزر تبديل الوضع الداكن
+        darkModeToggle.addEventListener('click', toggleDarkMode); // عند النقر على الزر، تنفيذ دالة تبديل الوضع
+
+        // التحقق من تفضيل الوضع المحفوظ وتعيين حالة الأيقونة الأولية
+        if (localStorage.getItem('theme') === 'dark' || 
+            (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) { // التحقق من الوضع المحفوظ أو تفضيل النظام
+            document.documentElement.classList.add('dark'); // تطبيق الوضع الداكن
+            sunIcon.classList.remove('hidden'); // إظهار أيقونة الشمس
+            moonIcon.classList.add('hidden'); // إخفاء أيقونة القمر
+        } else { // إذا كان الوضع فاتح
+            sunIcon.classList.add('hidden'); // إخفاء أيقونة الشمس
+            moonIcon.classList.remove('hidden'); // إظهار أيقونة القمر
+        }
+
+        // مراقب التغييرات لتحديث مظهر الرسم البياني عند تغيير الوضع الداكن
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') { // التحقق من تغيير الـ class
+                    const isDark = document.documentElement.classList.contains('dark'); // التحقق من الوضع الحالي
+                    chart.updateOptions({
+                        theme: {
+                            mode: isDark ? 'dark' : 'light' // تحديث مظهر الرسم البياني
+                        }
+                    });
+                }
+            });
+        });
+
+        // بدء مراقبة التغييرات على عنصر HTML
+        observer.observe(document.documentElement, {
+            attributes: true, // مراقبة التغييرات في السمات
+            attributeFilter: ['class'] // مراقبة تغييرات الـ class فقط
+        });
+    </script>
+</body>
+</html>

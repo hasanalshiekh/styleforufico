@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Analytics This Week</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script>
+        // إعدادات Tailwind CSS المخصصة للتحليلات المالية
+        tailwind.config = {
+            darkMode: 'class', // تفعيل الوضع الداكن باستخدام class
+            theme: {
+                extend: {
+                    colors: {
+                        // ألوان مخصصة للوضع الداكن
+                        'dark': '#1a1a1a', // اللون الأساسي للخلفية الداكنة
+                        'dark-2': '#2d2d2d', // لون البطاقات في الوضع الداكن
+                        'dark-3': '#404040', // لون الحدود في الوضع الداكن
+                        'dark-6': '#a0a0a0', // لون النصوص الثانوية في الوضع الداكن
+                        'stroke': '#e5e5e5', // لون خطوط الفصل
+                        // ظلال مخصصة
+                        'shadow-1': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)', // ظل خفيف
+                        'shadow-card': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)', // ظل البطاقات
+                        // أحجام خط مخصصة
+                        'body-2xlg': '1.5rem', // حجم خط كبير للعناوين
+                    },
+                    spacing: {
+                        '7.5': '1.875rem', // مسافة مخصصة (30px)
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* تنسيق مربع التلميحات (tooltip) في الرسم البياني - الوضع الفاتح */
+        .apexcharts-tooltip {
+            background: rgba(255, 255, 255, 0.95) !important; /* خلفية شفافة بيضاء */
+            border: 1px solid #e5e5e5 !important; /* حدود رمادية فاتحة */
+            border-radius: 8px !important; /* زوايا مدورة */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important; /* ظل خفيف */
+        }
+        
+        /* تنسيق مربع التلميحات في الوضع الداكن */
+        .dark .apexcharts-tooltip {
+            background: rgba(45, 45, 45, 0.95) !important; /* خلفية شفافة داكنة */
+            border: 1px solid #404040 !important; /* حدود رمادية داكنة */
+            color: white !important; /* لون النص أبيض */
+        }
+        
+        /* تنسيق خطوط الشبكة في الرسم البياني (متقطعة) */
+        .apexcharts-gridline {
+            stroke-dasharray: 5 !important; /* خطوط متقطعة */
+        }
+        
+        /* تنسيق خطوط الشبكة في الوضع الداكن */
+        .dark .apexcharts-gridline {
+            stroke: #404040 !important; /* لون الخطوط رمادي داكن */
+        }
+        
+        /* تنسيق النصوص في الرسم البياني في الوضع الداكن */
+        .dark .apexcharts-text {
+            fill: #a0a0a0 !important; /* لون النص رمادي فاتح */
+        }
+        
+        /* تنسيق تسميات المحاور في الوضع الداكن */
+        .dark .apexcharts-xaxis-label,
+        .dark .apexcharts-yaxis-label {
+            fill: #a0a0a0 !important; /* لون تسميات المحاور رمادي فاتح */
+        }
+        
+        /* تأثيرات انتقال سلسة للألوان */
+        * {
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+        }
+        
+        /* تخصيص شريط التمرير - عرض الشريط */
+        ::-webkit-scrollbar {
+            width: 6px; /* عرض شريط التمرير */
+        }
+        
+        /* تخصيص شريط التمرير - خلفية المسار */
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; /* لون خلفية مسار التمرير */
+        }
+        
+        /* تخصيص شريط التمرير - شكل المؤشر */
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1; /* لون مؤشر التمرير */
+            border-radius: 3px; /* زوايا مدورة للمؤشر */
+        }
+        
+        /* تخصيص شريط التمرير - تأثير التحويم على المؤشر */
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8; /* لون المؤشر عند التحويم */
+        }
+        
+        /* تخصيص شريط التمرير في الوضع الداكن - خلفية المسار */
+        .dark ::-webkit-scrollbar-track {
+            background: #2d2d2d; /* لون خلفية مسار التمرير في الوضع الداكن */
+        }
+        
+        /* تخصيص شريط التمرير في الوضع الداكن - شكل المؤشر */
+        .dark ::-webkit-scrollbar-thumb {
+            background: #555; /* لون مؤشر التمرير في الوضع الداكن */
+        }
+        
+        /* تخصيص شريط التمرير في الوضع الداكن - تأثير التحويم */
+        .dark ::-webkit-scrollbar-thumb:hover {
+            background: #666; /* لون المؤشر عند التحويم في الوضع الداكن */
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-dark min-h-screen p-4 sm:p-6 lg:p-8">
+    <div class="max-w-6xl mx-auto">
+        <div class="mb-6 flex justify-between items-start">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Financial Analytics Dashboard</h1>
+                <p class="text-gray-600 dark:text-gray-400">Monitor your trading volume and portfolio value</p>
+            </div>
+            <button id="darkModeToggle" class="p-2 rounded-lg bg-white dark:bg-dark-2 border border-gray-200 dark:border-dark-3 hover:bg-gray-50 dark:hover:bg-dark-3 transition-colors">
+                <svg id="sunIcon" class="w-5 h-5 text-gray-600 dark:text-gray-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                </svg>
+                <svg id="moonIcon" class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                </svg>
+            </button>
+        </div>
+
+        <div class="rounded-[10px] bg-white px-7.5 pt-7.5 shadow-1 dark:bg-gray-dark dark:shadow-card col-span-12 xl:col-span-5">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <h2 class="text-body-2xlg font-bold text-dark dark:text-white">Financial Analytics this week</h2>
+                <div class="relative">
+                    <button class="flex h-8 w-full items-center justify-between gap-x-1 rounded-md border border-[#E8E8E8] bg-white px-3 py-2 text-sm font-medium text-dark-5 outline-none ring-offset-white disabled:cursor-not-allowed disabled:opacity-50 data-[placeholder]:text-neutral-500 dark:border-dark-3 dark:bg-dark-2 dark:text-white dark:ring-offset-neutral-950 dark:focus:ring-neutral-300 dark:data-[placeholder]:text-neutral-400 [&>span]:line-clamp-1 [&[data-state='open']>svg]:rotate-0" aria-expanded="false" aria-haspopup="menu" data-state="closed">
+                        <span class="capitalize">this week</span>
+                        <svg width="22" height="22" viewBox="0 0 22 22" fill="currentColor" class="size-4 rotate-180 transition-transform">
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M10.551 7.728a.687.687 0 01.895 0l6.417 5.5a.687.687 0 11-.895 1.044l-5.97-5.117-5.969 5.117a.687.687 0 01-.894-1.044l6.416-5.5z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="-ml-3.5 mt-3">
+                <div style="min-height: 385px;" class="">
+                    <div id="financialAnalyticsChart" class="w-full h-full"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // بيانات الرسم البياني للتحليلات المالية الأسبوعية
+        const chartData = {
+            // سلاسل البيانات المكدسة
+            series: [
+                {
+                    name: 'Trading Volume', // حجم التداول
+                    data: [44, 55, 41, 67, 22, 43, 65] // البيانات لكل يوم من أيام الأسبوع
+                },
+                {
+                    name: 'Portfolio Value', // قيمة المحفظة
+                    data: [13, 23, 20, 8, 13, 27, 15] // البيانات لكل يوم من أيام الأسبوع
+                }
+            ],
+            // إعدادات الرسم البياني
+            options: {
+                // إعدادات الرسم الأساسية
+                chart: {
+                    type: 'bar', // نوع الرسم: عمدان عمودية
+                    height: 370, // ارتفاع الرسم البياني
+                    stacked: true, // تكديس العمدان (Trading Volume في الأسفل، Portfolio Value في الأعلى)
+                    toolbar: {
+                        show: false // إخفاء شريط الأدوات
+                    },
+                    // إعدادات الحركة والتأثيرات
+                    animations: {
+                        enabled: true, // تفعيل الحركة
+                        easing: 'easeinout', // نوع تأثير الحركة
+                        speed: 800, // سرعة الحركة الأساسية
+                        animateGradually: {
+                            enabled: true, // تفعيل الحركة التدريجية
+                            delay: 150 // التأخير بين العناصر
+                        },
+                        dynamicAnimation: {
+                            enabled: true, // تفعيل الحركة الديناميكية
+                            speed: 350 // سرعة الحركة الديناميكية
+                        }
+                    }
+                },
+                colors: ['#876d4b', '#2d2a26'], // ألوان السلاسل: بني ذهبي وأسود داكن
+                // إعدادات تسميات البيانات
+                dataLabels: {
+                    enabled: false // إخفاء تسميات البيانات على العمدان
+                },
+                // إعدادات الحدود
+                stroke: {
+                    width: 0 // عدم وجود حدود حول العمدان
+                },
+                // إعدادات شكل العمدان المكدسة
+                plotOptions: {
+                    bar: {
+                        horizontal: false, // عمدان عمودية (وليس أفقية)
+                        columnWidth: '32.5%', // عرض العمدان (أرفع للحصول على مظهر أنيق)
+                        endingShape: 'rounded', // شكل نهاية العمدان مدور
+                        borderRadius: 2, // نصف قطر الزوايا المدورة
+                        borderRadiusApplication: 'end', // تطبيق الزوايا المدورة على النهايات فقط
+                        borderRadiusWhenStacked: 'last' // تطبيق الزوايا المدورة على العنصر الأخير في المكدس
+                    },
+                },
+                xaxis: {
+                    categories: ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+                    labels: {
+                        style: {
+                            colors: '#373d3f',
+                            fontSize: '12px',
+                            fontFamily: 'Helvetica, Arial, sans-serif'
+                        }
+                    },
+                    axisBorder: {
+                        show: false
+                    },
+                    axisTicks: {
+                        show: false
+                    }
+                },
+                yaxis: {
+                    labels: {
+                        style: {
+                            colors: '#373d3f',
+                            fontSize: '11px',
+                            fontFamily: 'Helvetica, Arial, sans-serif'
+                        },
+                        formatter: function (val) {
+                            return val.toFixed(0);
+                        }
+                    },
+                    min: 0,
+                    max: 100
+                },
+                grid: {
+                    borderColor: '#e0e0e0',
+                    strokeDashArray: 5,
+                    xaxis: {
+                        lines: {
+                            show: false
+                        }
+                    },
+                    yaxis: {
+                        lines: {
+                            show: true
+                        }
+                    }
+                },
+                tooltip: {
+                    theme: 'light',
+                    x: {
+                        format: 'ddd'
+                    },
+                    y: {
+                        formatter: function (val) {
+                            return val.toFixed(0);
+                        }
+                    },
+                    style: {
+                        fontSize: '12px',
+                        fontFamily: 'Helvetica, Arial, sans-serif'
+                    }
+                },
+                legend: {
+                    show: true,
+                    position: 'top',
+                    horizontalAlign: 'left',
+                    fontSize: '14px',
+                    fontFamily: 'Helvetica, Arial, sans-serif',
+                    fontWeight: 500,
+                    offsetY: 0,
+                    markers: {
+                        width: 20,
+                        height: 20,
+                        radius: 9,
+                        offsetX: -5
+                    },
+                    labels: {
+                        colors: '#373d3f'
+                    },
+                    itemMargin: {
+                        horizontal: 10,
+                        vertical: 5
+                    }
+                },
+                responsive: [{
+                    breakpoint: 768,
+                    options: {
+                        chart: {
+                            height: 300
+                        }
+                    }
+                }]
+            }
+        };
+
+        let chart = new ApexCharts(document.querySelector("#financialAnalyticsChart"), {
+            ...chartData.options,
+            series: chartData.series
+        });
+        chart.render();
+
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const sunIcon = document.getElementById('sunIcon');
+        const moonIcon = document.getElementById('moonIcon');
+
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+            } else {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
+            }
+        }
+
+        darkModeToggle.addEventListener('click', toggleDarkMode);
+
+        if (localStorage.getItem('theme') === 'dark' || 
+            (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+            sunIcon.classList.remove('hidden');
+            moonIcon.classList.add('hidden');
+        } else {
+            sunIcon.classList.add('hidden');
+            moonIcon.classList.remove('hidden');
+        }
+
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    const isDark = document.documentElement.classList.contains('dark');
+                    chart.updateOptions({
+                        theme: {
+                            mode: isDark ? 'dark' : 'light'
+                        }
+                    });
+                }
+            });
+        });
+
+        observer.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ['class']
+        });
+    </script>
+</body>
+</html>

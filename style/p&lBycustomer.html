@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P&L By Customer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script>
+        // إعدادات Tailwind CSS المخصصة
+        tailwind.config = {
+            darkMode: 'class', // تفعيل الوضع الداكن باستخدام class
+            theme: {
+                extend: {
+                    colors: {
+                        // ألوان مخصصة للوضع الداكن
+                        'dark': '#1a1a1a', // اللون الأساسي للخلفية الداكنة
+                        'dark-2': '#2d2d2d', // لون البطاقات في الوضع الداكن
+                        'dark-3': '#404040', // لون الحدود في الوضع الداكن
+                        'dark-6': '#a0a0a0', // لون النصوص الثانوية في الوضع الداكن
+                        'stroke': '#e5e5e5', // لون خطوط الفصل
+                        // ظلال مخصصة
+                        'shadow-1': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)', // ظل خفيف
+                        'shadow-card': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)', // ظل البطاقات
+                        // أحجام خط مخصصة
+                        'body-2xlg': '1.5rem', // حجم خط كبير للعناوين
+                        'heading-4': '1.25rem', // حجم خط العناوين الفرعية
+                    },
+                    spacing: {
+                        '7.5': '1.875rem', // مسافة مخصصة (30px)
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* تنسيق مربع التلميحات (tooltip) في الرسم البياني - الوضع الفاتح */
+        .apexcharts-tooltip {
+            background: rgba(255, 255, 255, 0.95) !important; /* خلفية شفافة بيضاء */
+            border: 1px solid #e5e5e5 !important; /* حدود رمادية فاتحة */
+            border-radius: 8px !important; /* زوايا مدورة */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important; /* ظل خفيف */
+        }
+        
+        /* تنسيق مربع التلميحات في الوضع الداكن */
+        .dark .apexcharts-tooltip {
+            background: rgba(45, 45, 45, 0.95) !important; /* خلفية شفافة داكنة */
+            border: 1px solid #404040 !important; /* حدود رمادية داكنة */
+            color: white !important; /* لون النص أبيض */
+        }
+        
+        /* تنسيق خطوط الشبكة في الرسم البياني */
+        .apexcharts-gridline {
+            stroke-dasharray: 0 !important; /* خطوط مستقيمة بدون تقطيع */
+            stroke: #ccc !important; /* لون الخطوط رمادي فاتح */
+        }
+        
+        /* تنسيق خطوط الشبكة في الوضع الداكن */
+        .dark .apexcharts-gridline {
+            stroke: #404040 !important; /* لون الخطوط رمادي داكن */
+        }
+        
+        /* تنسيق النصوص في الرسم البياني في الوضع الداكن */
+        .dark .apexcharts-text {
+            fill: #a0a0a0 !important; /* لون النص رمادي فاتح */
+        }
+        
+        /* تنسيق تسميات المحاور في الوضع الداكن */
+        .dark .apexcharts-xaxis-label,
+        .dark .apexcharts-yaxis-label {
+            fill: #a0a0a0 !important; /* لون تسميات المحاور رمادي فاتح */
+        }
+        
+        /* تأثيرات انتقال سلسة للألوان */
+        * {
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+        }
+        
+        /* تخصيص شريط التمرير - عرض الشريط */
+        ::-webkit-scrollbar {
+            width: 6px; /* عرض شريط التمرير */
+        }
+        
+        /* تخصيص شريط التمرير - خلفية المسار */
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; /* لون خلفية مسار التمرير */
+        }
+        
+        /* تخصيص شريط التمرير - شكل المؤشر */
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1; /* لون مؤشر التمرير */
+            border-radius: 3px; /* زوايا مدورة للمؤشر */
+        }
+        
+        /* تخصيص شريط التمرير - تأثير التحويم على المؤشر */
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8; /* لون المؤشر عند التحويم */
+        }
+        
+        /* تخصيص شريط التمرير في الوضع الداكن - خلفية المسار */
+        .dark ::-webkit-scrollbar-track {
+            background: #2d2d2d; /* لون خلفية مسار التمرير في الوضع الداكن */
+        }
+        
+        /* تخصيص شريط التمرير في الوضع الداكن - شكل المؤشر */
+        .dark ::-webkit-scrollbar-thumb {
+            background: #555; /* لون مؤشر التمرير في الوضع الداكن */
+        }
+        
+        /* تخصيص شريط التمرير في الوضع الداكن - تأثير التحويم */
+        .dark ::-webkit-scrollbar-thumb:hover {
+            background: #666; /* لون المؤشر عند التحويم في الوضع الداكن */
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-dark min-h-screen p-4 sm:p-6 lg:p-8">
+    <div class="max-w-6xl mx-auto">
+        <div class="mb-6 flex justify-between items-start">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">P&L Dashboard</h1>
+                <p class="text-gray-600 dark:text-gray-400">Monitor profit and loss by customer</p>
+            </div>
+            <button id="darkModeToggle" class="p-2 rounded-lg bg-white dark:bg-dark-2 border border-gray-200 dark:border-dark-3 hover:bg-gray-50 dark:hover:bg-dark-3 transition-colors">
+                <svg id="sunIcon" class="w-5 h-5 text-gray-600 dark:text-gray-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                </svg>
+                <svg id="moonIcon" class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                </svg>
+            </button>
+        </div>
+
+        <div class="col-span-12 lg:col-span-4">
+            <div class="sticky top-24">
+                <div class="rounded-[10px] bg-white p-7.5 shadow-1 dark:bg-gray-dark dark:shadow-card">
+                    <div class="mb-4">
+                        <h2 class="text-heading-4 font-bold text-dark dark:text-white">P&L By Customer</h2>
+                    </div>
+                    <div class="h-[400px]">
+                        <div class="w-full h-full">
+                            <div id="plByCustomerChart" class="w-full h-full"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // بيانات الرسم البياني وإعداداته
+        const chartData = {
+            // سلسلة البيانات
+            series: [
+                {
+                    name: 'value', // اسم السلسلة
+                    data: [920, 450, 380, 280, 190, -150] // البيانات لكل عميل (تتضمن قيم موجبة وسالبة)
+                }
+            ],
+            // إعدادات الرسم البياني
+            options: {
+                // إعدادات الرسم الأساسية
+                chart: {
+                    type: 'bar', // نوع الرسم: عمدان عمودية
+                    height: 400, // ارتفاع الرسم البياني
+                    toolbar: {
+                        show: false // إخفاء شريط الأدوات
+                    },
+                    // إعدادات الحركة والتأثيرات
+                    animations: {
+                        enabled: true, // تفعيل الحركة
+                        easing: 'easeinout', // نوع تأثير الحركة
+                        speed: 800, // سرعة الحركة الأساسية
+                        animateGradually: {
+                            enabled: true, // تفعيل الحركة التدريجية
+                            delay: 150 // التأخير بين العناصر
+                        },
+                        dynamicAnimation: {
+                            enabled: true, // تفعيل الحركة الديناميكية
+                            speed: 350 // سرعة الحركة الديناميكية
+                        }
+                    },
+                    offsetX: 0, // إزاحة أفقية
+                    offsetY: 0 // إزاحة عمودية
+                },
+                colors: ['#000000'], // لون العمدان (أسود)
+                // إعدادات تسميات البيانات
+                dataLabels: {
+                    enabled: false // إخفاء تسميات البيانات على العمدان
+                },
+                // إعدادات الحدود
+                stroke: {
+                    width: 0 // عدم وجود حدود حول العمدان
+                },
+                // إعدادات شكل العمدان
+                plotOptions: {
+                    bar: {
+                        horizontal: false, // عمدان عمودية (وليس أفقية)
+                        columnWidth: '30%', // عرض العمدان (أرفع للحصول على مظهر أنيق)
+                        endingShape: 'flat', // شكل نهاية العمدان مسطح
+                        borderRadius: 0, // بدون زوايا مدورة
+                        distributed: false // عدم توزيع الألوان بشكل مختلف
+                    },
+                },
+                // إعدادات المحور السيني (X-axis)
+                xaxis: {
+                    categories: ['JOPT', 'BIND', 'CCHQ', 'MANE', 'ARBK', 'JOFR'], // أسماء العملاء
+                    labels: {
+                        style: {
+                            colors: '#6b7280', // لون تسميات المحور السيني
+                            fontSize: '12px', // حجم خط التسميات
+                            fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif' // نوع الخط
+                        }
+                    },
+                    axisBorder: {
+                        show: false // إخفاء حدود المحور
+                    },
+                    axisTicks: {
+                        show: false // إخفاء علامات التقسيم
+                    },
+                    tickPlacement: 'on' // وضع العلامات على النقاط
+                },
+                // إعدادات المحور الصادي (Y-axis)
+                yaxis: {
+                    labels: {
+                        style: {
+                            colors: '#6b7280', // لون تسميات المحور الصادي
+                            fontSize: '11px', // حجم خط التسميات
+                            fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif' // نوع الخط
+                        },
+                        formatter: function (val) {
+                            return val.toLocaleString(); // تنسيق الأرقام مع فواصل الآلاف
+                        }
+                    },
+                    min: -350, // القيمة الدنيا للمحور
+                    max: 1050, // القيمة العليا للمحور
+                    tickAmount: 4 // عدد التقسيمات على المحور
+                },
+                // إعدادات الشبكة
+                grid: {
+                    borderColor: '#ccc', // لون خطوط الشبكة
+                    strokeDashArray: 0, // خطوط مستقيمة بدون تقطيع
+                    xaxis: {
+                        lines: {
+                            show: false // إخفاء الخطوط العمودية
+                        }
+                    },
+                    yaxis: {
+                        lines: {
+                            show: true // إظهار الخطوط الأفقية
+                        }
+                    }
+                },
+                // إعدادات مربع التلميحات
+                tooltip: {
+                    theme: 'light', // سمة التلميحات الفاتحة
+                    y: {
+                        formatter: function (val) {
+                            return val.toLocaleString(); // تنسيق القيم في التلميحات
+                        }
+                    },
+                    style: {
+                        fontSize: '12px', // حجم خط التلميحات
+                        fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif' // نوع خط التلميحات
+                    }
+                },
+                // إعدادات الأسطورة
+                legend: {
+                    show: true, // إظهار الأسطورة
+                    position: 'top', // موضع الأسطورة في الأعلى
+                    horizontalAlign: 'right', // محاذاة الأسطورة لليمين
+                    fontSize: '12px', // حجم خط الأسطورة
+                    fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif', // نوع خط الأسطورة
+                    fontWeight: 400, // وزن خط الأسطورة
+                    offsetY: -10, // إزاحة عمودية للأسطورة
+                    markers: {
+                        width: 8, // عرض رمز الأسطورة
+                        height: 8, // ارتفاع رمز الأسطورة
+                        radius: 4 // نصف قطر رمز الأسطورة (دائري)
+                    },
+                    labels: {
+                        colors: '#6b7280' // لون نص الأسطورة
+                    },
+                    itemMargin: {
+                        horizontal: 10, // المسافة الأفقية بين عناصر الأسطورة
+                        vertical: 5 // المسافة العمودية بين عناصر الأسطورة
+                    }
+                },
+                // إعدادات الاستجابة للشاشات المختلفة
+                responsive: [{
+                    breakpoint: 768, // نقطة التوقف للشاشات الصغيرة
+                    options: {
+                        chart: {
+                            height: 350 // ارتفاع مخفض للشاشات الصغيرة
+                        }
+                    }
+                }]
+            }
+        };
+
+        let chart = new ApexCharts(document.querySelector("#plByCustomerChart"), {
+            ...chartData.options,
+            series: chartData.series
+        });
+        chart.render();
+
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const sunIcon = document.getElementById('sunIcon');
+        const moonIcon = document.getElementById('moonIcon');
+
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+            } else {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
+            }
+        }
+
+        darkModeToggle.addEventListener('click', toggleDarkMode);
+
+        if (localStorage.getItem('theme') === 'dark' || 
+            (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+            sunIcon.classList.remove('hidden');
+            moonIcon.classList.add('hidden');
+        } else {
+            sunIcon.classList.add('hidden');
+            moonIcon.classList.remove('hidden');
+        }
+
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    const isDark = document.documentElement.classList.contains('dark');
+                    chart.updateOptions({
+                        theme: {
+                            mode: isDark ? 'dark' : 'light'
+                        }
+                    });
+                }
+            });
+        });
+
+        observer.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ['class']
+        });
+    </script>
+</body>
+</html>
